@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube AI Q&A Assistant - Chrome Built-in AI",
+  "version": "1.0.0",
+  "description": "Chrome Built-in AI-powered assistant that generates questions from YouTube video captions",
+
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://www.youtube.com/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/watch*"],
+      "js": [
+        "ai/promptClient.js",
+        "content/subtitleParser.js",
+        "content/uiOverlay.js",
+        "content/contentScript.js"
+      ],
+      "css": ["content/styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["content/styles.css"],
+      "matches": ["*://www.youtube.com/*"]
+    }
+  ]
+}
