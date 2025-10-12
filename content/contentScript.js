@@ -6,6 +6,7 @@
 class YouTubeAIAssistant {
   constructor() {
     this.promptClient = null;
+    this.summarizerClient = null;
     this.subtitleParser = null;
     this.uiOverlay = null;
     this.updateInterval = null;
@@ -15,6 +16,7 @@ class YouTubeAIAssistant {
     this.videoElement = null;
     this.questionGenerationInterval = 30; // How often to generate questions
     this.transcriptBufferAhead = 30; // Buffer transcript 30 seconds ahead of current time
+    this.summaryBuffer = 150; // Buffer summary 2.5 minutes ahead and behind of current time
   }
 
   /**
@@ -26,6 +28,7 @@ class YouTubeAIAssistant {
 
       // Create component instances
       this.promptClient = new PromptClient();
+      this.summarizerClient = new SummarizerClient();
       this.subtitleParser = new SubtitleParser();
       this.uiOverlay = new UIOverlay();
 
@@ -35,6 +38,12 @@ class YouTubeAIAssistant {
         console.error('Failed to initialize AI client');
         this.uiOverlay.showError('AI not available. Please ensure Chrome Built-in AI features are enabled.');
         return false;
+      }
+
+      // Initialize summarizer client
+      const summarizerInitialized = await this.summarizerClient.initialize();
+      if (!summarizerInitialized) {
+        console.warn('Summarizer API not available - will generate questions without video summary');
       }
 
       // Initialize subtitle parser
@@ -171,9 +180,10 @@ class YouTubeAIAssistant {
     try {
       // Get buffered transcript chunk to account for AI generation delay
       // Include past content + future buffer so questions are still relevant when ready
+      const currentTime = this.videoElement.currentTime;
       const transcript = await this.subtitleParser.getTranscriptChunk(
-        this.questionGenerationInterval,
-        this.transcriptBufferAhead
+        currentTime,
+        currentTime + this.transcriptBufferAhead,
       );
       console.log('Transcript:', transcript);
 
@@ -186,8 +196,21 @@ class YouTubeAIAssistant {
 
       console.log('Got transcript chunk:', transcript.substring(0, 100) + '...');
 
-      // Generate questions using AI
-      const questions = await this.promptClient.generateQuestions(transcript);
+      // Get video summary for current time (5-minute window)
+      let videoSummary = '';
+      if (this.summarizerClient && this.summarizerClient.initialized && this.videoElement) {
+        const summaryStartTime = currentTime - this.summaryBuffer;
+        const summaryEndTime = currentTime + this.summaryBuffer;
+        const text = await this.subtitleParser.getTranscriptChunk(
+          summaryStartTime,
+          summaryEndTime,
+        );
+        videoSummary = await this.summarizerClient.getSummaryForTime(text, summaryStartTime, summaryEndTime);
+        console.log('Got video summary:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
+      }
+
+      // Generate questions using AI (with video summary context)
+      const questions = await this.promptClient.generateQuestions(transcript, videoSummary);
 
       console.log('Generated questions:', questions);
 
@@ -224,6 +247,11 @@ class YouTubeAIAssistant {
     // Reset video-time tracking for new video
     this.lastTriggerTime = 0;
 
+    // Clear summarizer cache for new video
+    if (this.summarizerClient) {
+      this.summarizerClient.clearCache();
+    }
+
     // Refresh subtitle parser for new video
     this.subtitleParser.refreshTracks();
 
@@ -251,6 +279,10 @@ class YouTubeAIAssistant {
 
     if (this.promptClient) {
       this.promptClient.destroy();
+    }
+
+    if (this.summarizerClient) {
+      this.summarizerClient.destroy();
     }
 
     if (this.uiOverlay) {

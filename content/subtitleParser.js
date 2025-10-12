@@ -177,25 +177,23 @@ class SubtitleParser {
 
   /**
    * Get transcript text for the current time range
-   * @param {number} duration - How many seconds of transcript to fetch (default: 60)
-   * @param {number} bufferAhead - How many seconds ahead to buffer (default: 0)
+   * @param {number} startTime - Start time in seconds
+   * @param {number} endTime - End time in seconds
    * @returns {Promise<string>} Transcript text
    */
-  async getTranscriptChunk(duration = 60, bufferAhead = 30) {
+  async getTranscriptChunk(startTime, endTime) {
     if (!this.currentTrack) {
       console.warn('No caption track available');
       return '';
     }
 
     try {
-      const currentTime = this.getCurrentVideoTime();
       // Calculate time range with buffering: some past + buffer ahead
-      const startTime = currentTime;
-      const endTime = currentTime + bufferAhead;
       const videoId = this.getCurrentVideoId();
 
       // Check chunk cache first
       const chunkCacheKey = `${videoId}_${startTime}_${endTime}`;
+      console.log('Chunk cache key:', chunkCacheKey);
       if (this.cache.has(chunkCacheKey)) {
         return this.cache.get(chunkCacheKey);
       }
@@ -425,15 +423,6 @@ class SubtitleParser {
       console.warn('Error getting video ID:', error);
       return '';
     }
-  }
-
-  /**
-   * Get the current video playback time
-   * @returns {number} Current time in seconds
-   */
-  getCurrentVideoTime() {
-    const video = document.querySelector('video');
-    return video ? video.currentTime : 0;
   }
 
   /**
