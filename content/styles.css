@@ -1,0 +1,256 @@
+/*
+ * Styles for YouTube AI Q&A Assistant Overlay
+ * Dark theme with rounded buttons positioned above video controls
+ */
+
+/* Main overlay container */
+.yt-ai-overlay {
+  position: absolute;
+  bottom: 60px; /* Position above YouTube's bottom controls */
+  left: 12px;
+  width: fit-content;
+  max-height: 200px;
+  z-index: 1000;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease-in-out;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.yt-ai-overlay.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Questions container - no background, just positioning */
+.yt-ai-questions {
+  position: relative;
+}
+
+/* Questions list - vertical column */
+.yt-ai-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 300px;
+}
+
+/* Individual question buttons - YouTube native style */
+.yt-ai-question {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  line-height: 1.4;
+}
+
+.yt-ai-question:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.yt-ai-question:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Loading state */
+.yt-ai-no-questions {
+  padding: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Error state */
+.yt-ai-error {
+  padding: 16px;
+  text-align: center;
+  color: #ff6b6b;
+  background: rgba(255, 75, 75, 0.1);
+  border-radius: 8px;
+  margin: 8px;
+  font-size: 13px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .yt-ai-overlay {
+    left: 8px;
+    right: 8px;
+    bottom: 50px;
+    font-size: 13px;
+  }
+
+  .yt-ai-questions {
+    max-width: none;
+  }
+
+  .yt-ai-header {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .yt-ai-question {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .yt-ai-overlay {
+    left: 4px;
+    right: 4px;
+    bottom: 45px;
+  }
+
+  .yt-ai-questions-list {
+    max-height: 150px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .yt-ai-questions {
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .yt-ai-question {
+    background: rgba(32, 32, 32, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .yt-ai-question:hover {
+    background: rgba(64, 64, 64, 0.9);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .yt-ai-overlay,
+  .yt-ai-question {
+    transition: none;
+  }
+
+  .yt-ai-no-questions {
+    animation: none;
+  }
+}
+
+/* Dark mode adjustments (YouTube already uses dark mode) */
+@media (prefers-color-scheme: light) {
+  /* These styles would apply if YouTube ever has a light mode */
+  .yt-ai-questions {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .yt-ai-header {
+    background: rgba(248, 248, 248, 0.9);
+    color: #000000;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .yt-ai-question {
+    background: rgba(240, 240, 240, 0.9);
+    color: #000000;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .yt-ai-question:hover {
+    background: rgba(220, 220, 220, 0.9);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .yt-ai-no-questions {
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Hide overlay when YouTube's fullscreen mode is active */
+.html5-video-player.fullscreen .yt-ai-overlay {
+  display: none;
+}
+
+/* Ensure overlay doesn't interfere with YouTube's UI elements */
+.yt-ai-overlay {
+  pointer-events: auto;
+}
+
+.yt-ai-overlay * {
+  pointer-events: auto;
+}
+
+/* Prevent text selection on buttons */
+.yt-ai-question {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* AI Toggle Button in Player Controls */
+.ytp-ai-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  margin: 0;
+  vertical-align: top;
+  position: relative;
+}
+
+.ytp-ai-toggle::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: calc(50% - 15px);
+  width: 30px;
+  height: 3px;
+  background-color: #f00;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 1.5px;
+}
+
+.ytp-ai-toggle[aria-pressed="true"]::after {
+  opacity: 1;
+}
+
+.ytp-ai-toggle svg {
+  width: 100%;
+  height: 100%;
+  max-width: 18px;
+  max-height: 18px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2;
+  flex-shrink: 0;
+  display: block;
+  margin: auto;
+}
