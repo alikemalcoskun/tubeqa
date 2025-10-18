@@ -9,7 +9,8 @@
   bottom: 80px; /* Position above YouTube's bottom controls */
   left: 12px;
   width: fit-content;
-  max-height: 100px;
+  max-width: calc(100% - 24px); /* Prevent overflow */
+  max-height: 200px; /* Increased from 100px to prevent collapse */
   z-index: 1000;
   pointer-events: auto;
   opacity: 0;
@@ -18,6 +19,8 @@
   font-family: 'Roboto', 'Arial', sans-serif;
   font-size: 14px;
   line-height: 1.4;
+  display: block !important; /* Prevent collapse */
+  min-height: 0; /* Allow natural sizing */
 }
 
 .yt-ai-overlay.visible {
@@ -28,6 +31,8 @@
 /* Questions container - no background, just positioning */
 .yt-ai-questions {
   position: relative;
+  display: block;
+  min-height: 0; /* Allow natural sizing */
 }
 
 /* Questions list - vertical column */
@@ -36,6 +41,9 @@
   flex-direction: column;
   gap: 4px;
   max-width: 300px;
+  width: max-content;
+  min-width: 200px;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Individual question buttons - YouTube native style */
@@ -55,6 +63,10 @@
   overflow: hidden;
   font-family: 'Roboto', 'Arial', sans-serif;
   line-height: 1.4;
+  min-height: 32px; /* Prevent collapse */
+  display: block;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 .yt-ai-question:hover {
@@ -263,7 +275,9 @@
   flex-direction: column;
   gap: 4px;
   max-width: 400px;
+  min-width: 200px;
   margin-top: 8px;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Question block in answer view - matches existing question style */

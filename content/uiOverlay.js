@@ -180,9 +180,10 @@ class UIOverlay {
     try {
       // Find player container
       const playerContainer =
+        document.querySelector('.html5-video-player') ||
+        document.querySelector('#movie_player') ||
         document.querySelector('#player-container') ||
-        document.querySelector('#player') ||
-        document.querySelector('.html5-video-player');
+        document.querySelector('#player');
   
       if (!playerContainer) {
         console.warn('Player container not found, appending overlay to body.');
@@ -190,20 +191,29 @@ class UIOverlay {
         return;
       }
   
-      // Find control bar
+      // Find control bar (updated for new YouTube structure)
       const controls =
         playerContainer.querySelector('.ytp-chrome-bottom') ||
         playerContainer.querySelector('.html5-video-controls');
   
-      // If controls are in playerContainer, insertBefore, otherwise append
-      if (controls && controls.parentNode === playerContainer) {
-        playerContainer.insertBefore(this.overlay, controls);
-      } else if (controls && controls.parentNode) {
-        // If control bar is in parent, insertBefore
-        controls.parentNode.insertBefore(this.overlay, controls);
-      } else {
-        // If none of the above, append to playerContainer
+      if (!controls) {
+        console.warn('Control bar not found, appending to player container.');
         playerContainer.appendChild(this.overlay);
+        return;
+      }
+  
+      // Insert overlay before the control bar (works with both old and new structures)
+      if (controls.parentNode) {
+        controls.parentNode.insertBefore(this.overlay, controls);
+        console.log('Overlay inserted before control bar');
+      } else {
+        playerContainer.appendChild(this.overlay);
+        console.log('Overlay appended to player container');
+      }
+  
+      // Ensure overlay has proper positioning context
+      if (playerContainer.style.position === '' || playerContainer.style.position === 'static') {
+        playerContainer.style.position = 'relative';
       }
     } catch (err) {
       console.error('Failed to initialize UI overlay:', err);
@@ -460,9 +470,15 @@ class UIOverlay {
     // Try to find the right place in player controls
     const injectButton = () => {
       try {
-        // Look for the right control bar section
-        const controlBar = document.querySelector('.ytp-right-controls') ||
-                           document.querySelector('.ytp-chrome-controls');
+        // Look for the right control bar section (updated for new YouTube structure)
+        // Try new structure first (.ytp-right-controls-right), then fall back to old structure
+        let controlBar = document.querySelector('.ytp-right-controls-right');
+        
+        if (!controlBar) {
+          // Fall back to old structure
+          controlBar = document.querySelector('.ytp-right-controls') ||
+                       document.querySelector('.ytp-chrome-controls');
+        }
 
         if (controlBar) {
           // Insert before the fullscreen button or at the end
