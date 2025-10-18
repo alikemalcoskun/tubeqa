@@ -56,10 +56,20 @@ class PromptClient {
       const prompt = `${context}
 Based on this video transcript segment: "${transcriptText}"
 
-Generate 2-3 questions that viewers might ask about this content. Return only a JSON array of question strings.`;
+Generate 3 questions that viewers might ask about this content. Return only a JSON array of question strings.`;
 
+      // Question JSON schema
+      const questionJsonSchema = {
+        type: 'object',
+        properties: {
+          questions: {
+            type: 'array',
+            items: { type: 'string' }
+          }
+        }
+      };
       console.log("Question generation starting")
-      const response = await this.session.prompt(prompt);
+      const response = await this.session.prompt(prompt, { responseConstraint: questionJsonSchema });
       console.log("Question generation response:", response);
       const questions = this.parseQuestions(response);
       console.log("Question generation parsed questions:", questions);
@@ -133,11 +143,8 @@ Answer:`;
     try {
       // Try to parse as JSON first
       const parsed = JSON.parse(response);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter(q => typeof q === 'string' && q.trim().length > 0)
-          .map(q => this.cleanQuestionString(q)) // Clean quotes and extra characters
-          .slice(0, 3); // Return up to 3 questions
+      if (Array.isArray(parsed.questions)) {
+        return parsed.questions.map(q => this.cleanQuestionString(q)); // Clean quotes and extra characters
       }
     } catch (e) {
       // If JSON parsing fails, try to extract questions from text
