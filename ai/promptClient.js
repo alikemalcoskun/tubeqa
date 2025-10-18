@@ -72,6 +72,59 @@ Generate 2-3 questions that viewers might ask about this content. Return only a 
   }
 
   /**
+   * Generate answer for a specific question with streaming support
+   * @param {string} question - The question to answer
+   * @param {string} videoSummary - Summary of the video for context
+   * @param {Function} onChunk - Callback for each streamed chunk
+   * @returns {Promise<string>} Complete answer
+   */
+  async generateAnswer(question, videoSummary, onChunk) {
+    if (!this.initialized || !this.session) {
+      console.warn('AI session not initialized');
+      return '';
+    }
+
+    try {
+      // Create a smart prompt that uses summary for video-specific questions
+      // and general knowledge for general questions
+      const prompt = `You are answering a question about a YouTube video.
+
+${videoSummary ? `Video Context: ${videoSummary}` : 'No video context available.'}
+
+Question: "${question}"
+
+Instructions:
+- If the question is specific to the video content and you have the video context, answer based on that context.
+- If the question is more general or you don't have enough video context, use your general knowledge.
+- Be concise but thorough.
+- If you're using video context, start with phrases like "Based on the video..." or "According to the content..."
+- If you're using general knowledge, start with phrases like "In general..." or "Generally speaking..."
+
+Answer:`;
+
+      console.log('Generating answer for question:', question);
+      
+      let fullAnswer = '';
+      
+      // Use prompt with streaming
+      const stream = await this.session.promptStreaming(prompt);
+      
+      for await (const chunk of stream) {
+        fullAnswer = chunk; // Chrome AI returns full text so far, not deltas
+        if (onChunk) {
+          onChunk(chunk);
+        }
+      }
+
+      console.log('Answer generation complete');
+      return fullAnswer;
+    } catch (error) {
+      console.error('Failed to generate answer:', error);
+      return 'Sorry, I encountered an error generating the answer.';
+    }
+  }
+
+  /**
    * Parse the AI response into an array of questions
    * @param {string} response - Raw AI response
    * @returns {string[]} Array of questions

@@ -228,12 +228,54 @@ class YouTubeAIAssistant {
    * @param {string} question - The clicked question
    * @param {number} index - Question index
    */
-  handleQuestionClick(question, index) {
+  async handleQuestionClick(question, index) {
     console.log(`Question clicked: "${question}" (index: ${index})`);
 
-    // STUB FOR PHASE 2: This will generate detailed answers
-    // For now, just log and show a placeholder
-    console.log('Answer generation will be implemented in Phase 2');
+    if (!this.isInitialized || !this.promptClient || !this.uiOverlay) {
+      console.warn('Cannot handle question click - not initialized');
+      return;
+    }
+
+    try {
+      // Show chatbox with loading state
+      this.uiOverlay.showChatbox(question);
+
+      // Get current video summary
+      let videoSummary = '';
+      if (this.summarizerClient && this.summarizerClient.initialized && this.videoElement) {
+        const currentTime = this.videoElement.currentTime;
+        const summaryStartTime = currentTime - this.summaryBuffer;
+        const summaryEndTime = currentTime + this.summaryBuffer;
+        const text = await this.subtitleParser.getTranscriptChunk(
+          summaryStartTime,
+          summaryEndTime,
+        );
+        videoSummary = await this.summarizerClient.getSummaryForTime(text, summaryStartTime, summaryEndTime);
+        console.log('Got video summary:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
+      }
+
+      // Generate answer with streaming
+      console.log('Starting answer generation with streaming...');
+      let fullAnswer = '';
+      await this.promptClient.generateAnswer(
+        question,
+        videoSummary,
+        (chunk) => {
+          // Update UI with each streamed chunk
+          fullAnswer += chunk;
+          this.uiOverlay.updateChatboxContent(fullAnswer);
+        }
+      );
+
+      // Mark streaming as complete
+      this.uiOverlay.finishStreaming();
+      console.log('Answer generation complete');
+
+    } catch (error) {
+      console.error('Failed to generate answer:', error);
+      this.uiOverlay.updateChatboxContent('Sorry, I encountered an error generating the answer.');
+      this.uiOverlay.finishStreaming();
+    }
   }
 
   /**

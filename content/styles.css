@@ -6,10 +6,10 @@
 /* Main overlay container */
 .yt-ai-overlay {
   position: absolute;
-  bottom: 60px; /* Position above YouTube's bottom controls */
+  bottom: 80px; /* Position above YouTube's bottom controls */
   left: 12px;
   width: fit-content;
-  max-height: 200px;
+  max-height: 100px;
   z-index: 1000;
   pointer-events: auto;
   opacity: 0;
@@ -253,4 +253,133 @@
   flex-shrink: 0;
   display: block;
   margin: auto;
+}
+
+/* ==================== Answer Block Styles ==================== */
+
+/* Answer container - matches question block style */
+.ytai-answer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 400px;
+  margin-top: 8px;
+}
+
+/* Question block in answer view - matches existing question style */
+.ytai-answer-question {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  position: relative;
+}
+
+/* Close button for answer */
+.ytai-answer-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.ytai-answer-close:hover {
+  background: rgba(255, 59, 48, 0.8);
+  color: #ffffff;
+}
+
+/* Answer block - matches question block style */
+.ytai-answer-block {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for answer block */
+.ytai-answer-block::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ytai-answer-block::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.ytai-answer-block::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.ytai-answer-block::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Loading dots animation - matches question block style */
+.ytai-answer-loading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.ytai-answer-loading span {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.ytai-answer-loading span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.ytai-answer-loading span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ytai-answer-container {
+    max-width: 100%;
+  }
+
+  .ytai-answer-block {
+    max-height: 120px;
+  }
 }

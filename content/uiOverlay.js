@@ -15,6 +15,10 @@ class UIOverlay {
     this.isHovering = false; // Track if user is hovering over questions
     this.pendingQuestions = null; // Store questions generated while hovering
     this.STORAGE_KEY = 'youtube-ai-assistant-enabled'; // LocalStorage key
+    this.chatbox = null; // Chatbox for displaying answers
+    this.chatboxContent = null; // Content area of chatbox
+    this.isChatboxVisible = false; // Track chatbox visibility
+    this.isStreaming = false; // Track if answer is streaming
   }
 
   /**
@@ -400,6 +404,9 @@ class UIOverlay {
       clearTimeout(this.hideTimeout);
     }
 
+    // Destroy chatbox
+    this.destroyChatbox();
+
     this.overlay = null;
     this.questionsContainer = null;
     this.toggleButton = null;
@@ -543,6 +550,136 @@ class UIOverlay {
 
     // Re-insert at new position
     this.insertOverlayIntoDOM();
+  }
+
+  /**
+   * Show answer block below questions with a question
+   * @param {string} question - The question being answered
+   */
+  showChatbox(question) {
+    // Hide questions when showing answer
+    if (this.questionsContainer) {
+      const questionsList = this.questionsContainer.querySelector('.yt-ai-questions-list');
+      if (questionsList) {
+        questionsList.style.display = 'none';
+      }
+    }
+
+    // Remove existing answer container if any
+    this.destroyChatbox();
+
+    // Create answer container
+    this.chatbox = document.createElement('div');
+    this.chatbox.className = 'ytai-answer-container';
+
+    // Create question block with close button
+    const questionBlock = document.createElement('div');
+    questionBlock.className = 'ytai-answer-question';
+    questionBlock.textContent = question;
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'ytai-answer-close';
+    closeButton.innerHTML = '&times;';
+    closeButton.title = 'Close';
+    closeButton.addEventListener('click', () => this.closeChatbox());
+    questionBlock.appendChild(closeButton);
+
+    // Create answer block with loading indicator
+    this.chatboxContent = document.createElement('div');
+    this.chatboxContent.className = 'ytai-answer-block';
+    
+    const loadingDots = document.createElement('div');
+    loadingDots.className = 'ytai-answer-loading';
+    loadingDots.innerHTML = '<span></span><span></span><span></span>';
+    this.chatboxContent.appendChild(loadingDots);
+
+    // Assemble answer container
+    this.chatbox.appendChild(questionBlock);
+    this.chatbox.appendChild(this.chatboxContent);
+
+    // Add to questions container
+    if (this.questionsContainer) {
+      this.questionsContainer.appendChild(this.chatbox);
+    }
+
+    this.isChatboxVisible = true;
+    this.isStreaming = true;
+  }
+
+  /**
+   * Update answer content with streaming text (full accumulated text)
+   * @param {string} text - The full accumulated text to display
+   */
+  updateChatboxContent(text) {
+    if (!this.chatbox || !this.chatboxContent) {
+      // Continue streaming in background but don't update UI
+      return;
+    }
+
+    // Only update if visible
+    if (!this.isChatboxVisible) {
+      return;
+    }
+
+    // Remove loading indicator if it exists
+    const loadingDots = this.chatboxContent.querySelector('.ytai-answer-loading');
+    if (loadingDots) {
+      loadingDots.remove();
+    }
+
+    // Chrome Prompt API returns full accumulated text in each chunk, not deltas
+    // So we just set the text directly
+    this.chatboxContent.textContent = text;
+
+    // Auto-scroll to bottom if needed
+    if (this.chatboxContent.scrollHeight > this.chatboxContent.clientHeight) {
+      this.chatboxContent.scrollTop = this.chatboxContent.scrollHeight;
+    }
+  }
+
+  /**
+   * Mark streaming as complete
+   */
+  finishStreaming() {
+    this.isStreaming = false;
+  }
+
+  /**
+   * Close answer and show questions again
+   */
+  closeChatbox() {
+    if (!this.chatbox) return;
+
+    // Remove answer container
+    if (this.chatbox.parentNode) {
+      this.chatbox.parentNode.removeChild(this.chatbox);
+    }
+
+    // Show questions again
+    if (this.questionsContainer) {
+      const questionsList = this.questionsContainer.querySelector('.yt-ai-questions-list');
+      if (questionsList) {
+        questionsList.style.display = 'flex';
+      }
+    }
+
+    this.chatbox = null;
+    this.chatboxContent = null;
+    this.isChatboxVisible = false;
+    console.log('Answer closed - showing questions');
+  }
+
+  /**
+   * Destroy chatbox completely
+   */
+  destroyChatbox() {
+    if (this.chatbox && this.chatbox.parentNode) {
+      this.chatbox.parentNode.removeChild(this.chatbox);
+    }
+    this.chatbox = null;
+    this.chatboxContent = null;
+    this.isChatboxVisible = false;
+    this.isStreaming = false;
   }
 }
 
