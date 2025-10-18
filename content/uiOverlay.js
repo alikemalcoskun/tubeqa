@@ -604,6 +604,27 @@ class UIOverlay {
     this.chatboxContent = document.createElement('div');
     this.chatboxContent.className = 'ytai-answer-block';
     
+    // Prevent scroll events from propagating to YouTube when hovering over answer
+    this.chatboxContent.addEventListener('wheel', (e) => {
+      const elem = this.chatboxContent;
+      const hasScroll = elem.scrollHeight > elem.clientHeight;
+      
+      if (hasScroll) {
+        // Check if scrolling would go out of bounds
+        const isAtTop = elem.scrollTop === 0;
+        const isAtBottom = elem.scrollTop + elem.clientHeight >= elem.scrollHeight - 1;
+        const scrollingUp = e.deltaY < 0;
+        const scrollingDown = e.deltaY > 0;
+        
+        // Only prevent default if we're scrolling within bounds
+        if ((scrollingDown && !isAtBottom) || (scrollingUp && !isAtTop)) {
+          e.stopPropagation();
+          e.preventDefault();
+          elem.scrollTop += e.deltaY;
+        }
+      }
+    }, { passive: false });
+    
     const loadingDots = document.createElement('div');
     loadingDots.className = 'ytai-answer-loading';
     loadingDots.innerHTML = '<span></span><span></span><span></span>';
