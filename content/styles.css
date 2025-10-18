@@ -270,20 +270,30 @@
 
 /* ==================== Answer Block Styles ==================== */
 
-/* Answer container */
-.ytai-answer-container {
+/* Answer wrapper - overall container, no scrolling */
+.ytai-answer-wrapper {
   display: flex;
   flex-direction: column;
   gap: 4px;
   max-width: 400px;
   min-width: 200px;
   width: max-content;
+  overflow: visible; /* Ensure wrapper doesn't scroll */
+}
+
+/* Answer container - scrollable content area only */
+.ytai-answer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   max-height: 300px;
   overflow-y: auto;
+  overflow-x: visible;
   border-radius: 28px;
   scroll-behavior: smooth;
   box-sizing: border-box;
   padding: 4px;
+  flex-shrink: 0; /* Don't shrink below max-height */
 }
 
 /* Hide scrollbar for answer container */
@@ -321,7 +331,7 @@
   box-sizing: border-box;
 }
 
-/* Close button for answer - standalone button at top left */
+/* Close button for answer - fixed at top */
 .ytai-answer-close {
   display: flex;
   align-items: center;
@@ -341,6 +351,7 @@
   line-height: 1;
   font-family: 'Roboto', 'Arial', sans-serif;
   box-sizing: border-box;
+  flex-shrink: 0; /* Don't shrink */
 }
 
 .ytai-answer-close:hover {
