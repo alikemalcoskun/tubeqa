@@ -133,7 +133,7 @@ class UIOverlay {
       console.log('User stopped hovering - applying pending updates');
       
       if (this.pendingQuestions) {
-        this.updateQuestions(this.pendingQuestions);
+        this.updateQuestions(this.pendingQuestions.questions, this.pendingQuestions.timestamp);
         this.pendingQuestions = null;
       }
     });
@@ -280,23 +280,41 @@ class UIOverlay {
 
   /**
    * Update the overlay with new questions
-   * @param {string[]} questions - Array of question strings
+   * @param {Array<{text: string, startTime: number, endTime: number}>} questions - Array of question objects with timing
+   * @param {number} timestamp - Video timestamp when questions were generated
    */
-  updateQuestions(questions) {
+  updateQuestions(questions, timestamp) {
     // If user is hovering, queue the update instead of applying immediately
     if (this.isHovering) {
       console.log('User is hovering - queueing questions update');
-      this.pendingQuestions = questions;
+      this.pendingQuestions = {questions, timestamp};
       return;
     }
 
+    // Add to question history
+    if (questions && questions.length > 0) {
+      this.questionHistory.push({
+        questions: questions,
+        timestamp: timestamp
+      });
+      this.currentQuestionGroupIndex = this.questionHistory.length - 1;
+    }
+
+    this.renderCurrentQuestions();
+  }
+
+  /**
+   * Render the current question group with navigation
+   */
+  renderCurrentQuestions() {
     const questionsList = document.getElementById('yt-ai-questions-list');
     if (!questionsList) return;
 
     // Clear existing questions
     questionsList.innerHTML = '';
 
-    if (questions.length === 0) {
+    // Check if we have questions
+    if (this.questionHistory.length === 0 || this.currentQuestionGroupIndex < 0) {
       const noQuestions = document.createElement('div');
       noQuestions.className = 'yt-ai-no-questions';
       noQuestions.textContent = 'Analyzing video...';
@@ -304,18 +322,60 @@ class UIOverlay {
       return;
     }
 
+    const currentGroup = this.questionHistory[this.currentQuestionGroupIndex];
+    const questions = currentGroup.questions;
+
+    // Create navigation container
+    if (this.questionHistory.length > 1) {
+      const navContainer = document.createElement('div');
+      navContainer.className = 'yt-ai-nav-container';
+
+      // Backward button
+      const backButton = document.createElement('button');
+      backButton.className = 'yt-ai-nav-button';
+      // TODO: Add custom icon for the back button
+      backButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>';
+      backButton.title = 'Previous questions';
+      backButton.disabled = this.currentQuestionGroupIndex === 0;
+      backButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.navigateBackward();
+      });
+
+      // Forward button
+      const forwardButton = document.createElement('button');
+      forwardButton.className = 'yt-ai-nav-button';
+      // TODO: Add custom icon for the forward button
+      forwardButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+      forwardButton.title = 'Next questions';
+      forwardButton.disabled = this.currentQuestionGroupIndex === this.questionHistory.length - 1;
+      forwardButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.navigateForward();
+      });
+
+      navContainer.appendChild(backButton);
+      navContainer.appendChild(forwardButton);
+      questionsList.appendChild(navContainer);
+    }
+
+    // Show only first 3 questions
+    const questionsToShow = questions.slice(0, 3);
+
     // Create question elements
-    questions.forEach((question, index) => {
+    questionsToShow.forEach((questionObj, index) => {
       const questionElement = document.createElement('button');
       questionElement.className = 'yt-ai-question';
-      questionElement.textContent = question;
+      questionElement.textContent = questionObj.text;
       questionElement.setAttribute('data-question-index', index);
+      questionElement.setAttribute('data-start-time', questionObj.startTime);
+      questionElement.setAttribute('data-end-time', questionObj.endTime);
 
       // Add click handler
       questionElement.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.handleQuestionClick(question, index);
+        this.handleQuestionClick(questionObj.text, index, questionObj.startTime, questionObj.endTime);
       });
 
       questionsList.appendChild(questionElement);
@@ -323,19 +383,41 @@ class UIOverlay {
   }
 
   /**
+   * Navigate to previous question group
+   */
+  navigateBackward() {
+    if (this.currentQuestionGroupIndex > 0) {
+      this.currentQuestionGroupIndex--;
+      this.renderCurrentQuestions();
+    }
+  }
+
+  /**
+   * Navigate to next question group
+   */
+  navigateForward() {
+    if (this.currentQuestionGroupIndex < this.questionHistory.length - 1) {
+      this.currentQuestionGroupIndex++;
+      this.renderCurrentQuestions();
+    }
+  }
+
+  /**
    * Handle question click events
    * @param {string} question - The clicked question
    * @param {number} index - Question index
+   * @param {number} startTime - Start time of the question's context
+   * @param {number} endTime - End time of the question's context
    */
-  handleQuestionClick(question, index) {
-    console.log('Question clicked:', question);
+  handleQuestionClick(question, index, startTime, endTime) {
+    console.log('Question clicked:', question, 'Time range:', startTime, '-', endTime);
 
-    // STUB FOR PHASE 2: This will be implemented in the next phase
+    // Pass timing information to the click handler
     if (this.onQuestionClick) {
-      this.onQuestionClick(question, index);
+      this.onQuestionClick(question, index, startTime, endTime);
     } else {
       // For now, just show an alert
-      alert(`Question clicked: "${question}"\n\nAnswer generation will be available in Phase 2.`);
+      alert(`Question clicked: "${question}"\n\nTime range: ${startTime.toFixed(1)}s - ${endTime.toFixed(1)}s\n\nAnswer generation will be available in Phase 2.`);
     }
   }
 

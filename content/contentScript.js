@@ -214,8 +214,15 @@ class YouTubeAIAssistant {
 
       console.log('Generated questions:', questions);
 
-      // Update the UI
-      this.uiOverlay.updateQuestions(questions);
+      // Store questions with timing information
+      const questionData = questions.map(q => ({
+        text: q,
+        startTime: currentTime,
+        endTime: currentTime + this.transcriptBufferAhead
+      }));
+
+      // Update the UI with questions and timing
+      this.uiOverlay.updateQuestions(questionData, currentTime);
 
     } catch (error) {
       console.error('Failed to update questions:', error);
@@ -227,9 +234,11 @@ class YouTubeAIAssistant {
    * Handle question click events
    * @param {string} question - The clicked question
    * @param {number} index - Question index
+   * @param {number} startTime - Start time of the question's context
+   * @param {number} endTime - End time of the question's context
    */
-  async handleQuestionClick(question, index) {
-    console.log(`Question clicked: "${question}" (index: ${index})`);
+  async handleQuestionClick(question, index, startTime, endTime) {
+    console.log(`Question clicked: "${question}" (index: ${index}), Time range: ${startTime}-${endTime}`);
 
     if (!this.isInitialized || !this.promptClient || !this.uiOverlay) {
       console.warn('Cannot handle question click - not initialized');
@@ -240,19 +249,23 @@ class YouTubeAIAssistant {
       // Show chatbox with loading state
       this.uiOverlay.showChatbox(question);
 
-      // Get current video summary
+      // Get video summary for the question's time range
       let videoSummary = '';
-      if (this.summarizerClient && this.summarizerClient.initialized && this.videoElement) {
-        const currentTime = this.videoElement.currentTime;
-        const summaryStartTime = currentTime - this.summaryBuffer;
-        const summaryEndTime = currentTime + this.summaryBuffer;
+      if (this.summarizerClient && this.summarizerClient.initialized) {
+        // Use the question's time range to get relevant context
+        const summaryStartTime = startTime - this.summaryBuffer;
+        const summaryEndTime = endTime + this.summaryBuffer;
         const text = await this.subtitleParser.getTranscriptChunk(
           summaryStartTime,
           summaryEndTime,
         );
         videoSummary = await this.summarizerClient.getSummaryForTime(text, summaryStartTime, summaryEndTime);
-        console.log('Got video summary:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
+        console.log('Got video summary for time range:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
       }
+
+      // Get transcript for the question's specific time range
+      const transcriptContext = await this.subtitleParser.getTranscriptChunk(startTime, endTime);
+      console.log('Got transcript context:', transcriptContext.substring(0, 100) + (transcriptContext.length > 100 ? '...' : ''));
 
       // Generate answer with streaming
       console.log('Starting answer generation with streaming...');

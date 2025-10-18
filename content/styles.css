@@ -45,6 +45,51 @@
   flex-shrink: 0; /* Prevent shrinking */
 }
 
+/* Navigation container */
+.yt-ai-nav-container {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  justify-content: flex-start;
+}
+
+/* Navigation buttons */
+.yt-ai-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0 2px #000;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 36px;
+  height: 28px;
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.yt-ai-nav-button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.yt-ai-nav-button:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yt-ai-nav-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.yt-ai-nav-button svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
 /* Individual question buttons - YouTube native style */
 .yt-ai-question {
   display: flex;
