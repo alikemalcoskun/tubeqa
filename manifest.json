@@ -17,6 +17,7 @@
       "js": [
         "ai/promptClient.js",
         "ai/summarizerClient.js",
+        "ai/translatorClient.js",
         "content/subtitleParser.js",
         "content/uiOverlay.js",
         "content/contentScript.js"

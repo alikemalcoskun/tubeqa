@@ -7,6 +7,7 @@ class YouTubeAIAssistant {
   constructor() {
     this.promptClient = null;
     this.summarizerClient = null;
+    this.translatorClient = null;
     this.subtitleParser = null;
     this.uiOverlay = null;
     this.updateInterval = null;
@@ -29,6 +30,7 @@ class YouTubeAIAssistant {
       // Create component instances
       this.promptClient = new PromptClient();
       this.summarizerClient = new SummarizerClient();
+      this.translatorClient = new TranslatorClient();
       this.subtitleParser = new SubtitleParser();
       this.uiOverlay = new UIOverlay();
 
@@ -44,6 +46,12 @@ class YouTubeAIAssistant {
       const summarizerInitialized = await this.summarizerClient.initialize();
       if (!summarizerInitialized) {
         console.warn('Summarizer API not available - will generate questions without video summary');
+      }
+
+      // Initialize translator client
+      const translatorInitialized = await this.translatorClient.initialize();
+      if (!translatorInitialized) {
+        console.warn('Translator API not available - will only work with English subtitles');
       }
 
       // Initialize subtitle parser
@@ -152,6 +160,51 @@ class YouTubeAIAssistant {
   }
 
   /**
+   * Translate text if it's in a non-English language
+   * @param {string} text - Text to translate
+   * @returns {Promise<string>} Translated text or original if English/translation fails
+   */
+  async translateIfNeeded(text) {
+    console.log('Translating text if needed');
+    if (!text || text.trim().length === 0) {
+      console.log('No text to translate, returning original text');
+      return text;
+    }
+
+    // Check if current track is in English
+    if (this.subtitleParser.isCurrentTrackEnglish()) {
+      console.log('Current track is in English, no translation needed');
+      return text; // No translation needed
+    }
+
+    // Check if translator is available
+    if (!this.translatorClient || !this.translatorClient.initialized) {
+      console.warn('Translator not available, returning original text');
+      return text; // Return original text
+    }
+
+    const sourceLanguage = this.subtitleParser.getCurrentTrackLanguage();
+    if (!sourceLanguage) {
+      console.warn('Could not determine source language, returning original text');
+      return text;
+    }
+
+    try {
+      console.log(`Translating text (${text.length} chars) from ${sourceLanguage} to English...`);
+      const translatedText = await this.translatorClient.translate(
+        text,
+        sourceLanguage,
+        'en'
+      );
+      console.log(`Translation complete: ${translatedText.length} chars`);
+      return translatedText;
+    } catch (error) {
+      console.error('Translation failed, returning original text:', error);
+      return text; // Fallback to original text
+    }
+  }
+
+  /**
    * Stop the question generation loop
    */
   stopQuestionLoop() {
@@ -196,6 +249,9 @@ class YouTubeAIAssistant {
 
       console.log('Got transcript chunk:', transcript.substring(0, 100) + '...');
 
+      // Translate transcript if needed (non-English captions)
+      const translatedTranscript = await this.translateIfNeeded(transcript);
+
       // Get video summary for current time (5-minute window)
       let videoSummary = '';
       if (this.summarizerClient && this.summarizerClient.initialized && this.videoElement) {
@@ -205,12 +261,14 @@ class YouTubeAIAssistant {
           summaryStartTime,
           summaryEndTime,
         );
-        videoSummary = await this.summarizerClient.getSummaryForTime(text, summaryStartTime, summaryEndTime);
+        // Translate text for summary if needed
+        const translatedText = await this.translateIfNeeded(text);
+        videoSummary = await this.summarizerClient.getSummaryForTime(translatedText, summaryStartTime, summaryEndTime);
         console.log('Got video summary:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
       }
 
       // Generate questions using AI (with video summary context)
-      const questions = await this.promptClient.generateQuestions(transcript, videoSummary);
+      const questions = await this.promptClient.generateQuestions(translatedTranscript, videoSummary);
 
       console.log('Generated questions:', questions);
 
@@ -259,13 +317,17 @@ class YouTubeAIAssistant {
           summaryStartTime,
           summaryEndTime,
         );
-        videoSummary = await this.summarizerClient.getSummaryForTime(text, summaryStartTime, summaryEndTime);
+        // Translate text for summary if needed
+        const translatedText = await this.translateIfNeeded(text);
+        videoSummary = await this.summarizerClient.getSummaryForTime(translatedText, summaryStartTime, summaryEndTime);
         console.log('Got video summary for time range:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
       }
 
       // Get transcript for the question's specific time range
       const transcriptContext = await this.subtitleParser.getTranscriptChunk(startTime, endTime);
-      console.log('Got transcript context:', transcriptContext.substring(0, 100) + (transcriptContext.length > 100 ? '...' : ''));
+      // Translate transcript context if needed
+      const translatedContext = await this.translateIfNeeded(transcriptContext);
+      console.log('Got transcript context (translated if needed):', translatedContext.substring(0, 100) + (translatedContext.length > 100 ? '...' : ''));
 
       // Generate answer with streaming
       console.log('Starting answer generation with streaming...');
@@ -338,6 +400,10 @@ class YouTubeAIAssistant {
 
     if (this.summarizerClient) {
       this.summarizerClient.destroy();
+    }
+
+    if (this.translatorClient) {
+      this.translatorClient.destroy();
     }
 
     if (this.uiOverlay) {
