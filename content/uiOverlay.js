@@ -588,17 +588,18 @@ class UIOverlay {
     this.chatbox = document.createElement('div');
     this.chatbox.className = 'ytai-answer-container';
 
-    // Create question block with close button
+    // Create close button as separate element at the top
+    const closeButton = document.createElement('button');
+    closeButton.className = 'ytai-answer-close';
+    // TODO: Add custom icon for the close button
+    closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>'; // Back arrow
+    closeButton.title = 'Back';
+    closeButton.addEventListener('click', () => this.closeChatbox());
+
+    // Create question block without close button
     const questionBlock = document.createElement('div');
     questionBlock.className = 'ytai-answer-question';
     questionBlock.textContent = question;
-    
-    const closeButton = document.createElement('button');
-    closeButton.className = 'ytai-answer-close';
-    closeButton.innerHTML = '&times;';
-    closeButton.title = 'Close';
-    closeButton.addEventListener('click', () => this.closeChatbox());
-    questionBlock.appendChild(closeButton);
 
     // Create answer block with loading indicator
     this.chatboxContent = document.createElement('div');
@@ -630,7 +631,8 @@ class UIOverlay {
     loadingDots.innerHTML = '<span></span><span></span><span></span>';
     this.chatboxContent.appendChild(loadingDots);
 
-    // Assemble answer container
+    // Assemble answer container - close button first, then question and answer
+    this.chatbox.appendChild(closeButton);
     this.chatbox.appendChild(questionBlock);
     this.chatbox.appendChild(this.chatboxContent);
 
