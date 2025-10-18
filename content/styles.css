@@ -10,7 +10,6 @@
   left: 12px;
   width: fit-content;
   max-width: calc(100% - 24px); /* Prevent overflow */
-  max-height: 200px; /* Increased from 100px to prevent collapse */
   z-index: 1000;
   pointer-events: auto;
   opacity: 0;
@@ -271,15 +270,30 @@
 
 /* ==================== Answer Block Styles ==================== */
 
-/* Answer container - matches question block style */
+/* Answer container */
 .ytai-answer-container {
   display: flex;
   flex-direction: column;
   gap: 4px;
   max-width: 400px;
   min-width: 200px;
-  margin-top: 8px;
-  flex-shrink: 0; /* Prevent shrinking */
+  width: max-content;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 28px;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+  padding: 4px;
+}
+
+/* Hide scrollbar for answer container */
+.ytai-answer-container::-webkit-scrollbar {
+  display: none;
+}
+
+.ytai-answer-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 /* Question block in answer view - matches existing question style */
@@ -290,7 +304,6 @@
   background: rgba(0, 0, 0, 0.3);
   text-shadow: 0 0 2px #000;
   backdrop-filter: none;
-  width: 100%;
   border: none;
   color: #ffffff;
   text-align: left;
@@ -305,6 +318,7 @@
   min-height: 32px; /* Prevent collapse */
   white-space: normal;
   word-wrap: break-word;
+  box-sizing: border-box;
 }
 
 /* Close button for answer - standalone button at top left */
@@ -326,6 +340,7 @@
   height: 32px;
   line-height: 1;
   font-family: 'Roboto', 'Arial', sans-serif;
+  box-sizing: border-box;
 }
 
 .ytai-answer-close:hover {
@@ -334,6 +349,12 @@
 
 .ytai-answer-close:active {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.ytai-answer-close svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 /* Answer block - matches question block style */
@@ -350,37 +371,11 @@
   line-height: 1.4;
   white-space: pre-wrap;
   word-wrap: break-word;
-  max-height: 150px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  box-sizing: border-box;
 }
 
 .ytai-answer-block:hover {
   background: rgba(0, 0, 0, 0.4);
-}
-
-/* Custom scrollbar for answer block */
-.ytai-answer-block::-webkit-scrollbar {
-  width: 8px;
-}
-
-.ytai-answer-block::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 8px 0; /* Add margin to keep scrollbar inside rounded corners */
-}
-
-.ytai-answer-block::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.ytai-answer-block:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.ytai-answer-block::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.6);
 }
 
 /* Loading dots animation - matches question block style */
@@ -422,9 +417,6 @@
 @media (max-width: 768px) {
   .ytai-answer-container {
     max-width: 100%;
-  }
-
-  .ytai-answer-block {
-    max-height: 120px;
+    max-height: 250px;
   }
 }

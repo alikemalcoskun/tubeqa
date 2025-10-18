@@ -605,9 +605,19 @@ class UIOverlay {
     this.chatboxContent = document.createElement('div');
     this.chatboxContent.className = 'ytai-answer-block';
     
-    // Prevent scroll events from propagating to YouTube when hovering over answer
-    this.chatboxContent.addEventListener('wheel', (e) => {
-      const elem = this.chatboxContent;
+    const loadingDots = document.createElement('div');
+    loadingDots.className = 'ytai-answer-loading';
+    loadingDots.innerHTML = '<span></span><span></span><span></span>';
+    this.chatboxContent.appendChild(loadingDots);
+
+    // Assemble answer container - close button first, then question and answer
+    this.chatbox.appendChild(closeButton);
+    this.chatbox.appendChild(questionBlock);
+    this.chatbox.appendChild(this.chatboxContent);
+    
+    // Prevent scroll events from propagating to YouTube when hovering over answer container
+    this.chatbox.addEventListener('wheel', (e) => {
+      const elem = this.chatbox;
       const hasScroll = elem.scrollHeight > elem.clientHeight;
       
       if (hasScroll) {
@@ -623,18 +633,11 @@ class UIOverlay {
           e.preventDefault();
           elem.scrollTop += e.deltaY;
         }
+      } else {
+        // Even if there's no scroll, prevent YouTube from scrolling when hovering
+        e.stopPropagation();
       }
     }, { passive: false });
-    
-    const loadingDots = document.createElement('div');
-    loadingDots.className = 'ytai-answer-loading';
-    loadingDots.innerHTML = '<span></span><span></span><span></span>';
-    this.chatboxContent.appendChild(loadingDots);
-
-    // Assemble answer container - close button first, then question and answer
-    this.chatbox.appendChild(closeButton);
-    this.chatbox.appendChild(questionBlock);
-    this.chatbox.appendChild(this.chatboxContent);
 
     // Add to questions container
     if (this.questionsContainer) {
@@ -670,9 +673,9 @@ class UIOverlay {
     // So we just set the text directly
     this.chatboxContent.textContent = text;
 
-    // Auto-scroll to bottom if needed
-    if (this.chatboxContent.scrollHeight > this.chatboxContent.clientHeight) {
-      this.chatboxContent.scrollTop = this.chatboxContent.scrollHeight;
+    // Auto-scroll container to bottom if needed
+    if (this.chatbox.scrollHeight > this.chatbox.clientHeight) {
+      this.chatbox.scrollTop = this.chatbox.scrollHeight;
     }
   }
 
