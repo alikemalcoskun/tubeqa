@@ -534,6 +534,25 @@ class UIOverlay {
   hide() {
     if (!this.overlay) return;
 
+    // Don't hide if chatbox is open
+    if (this.isChatboxVisible) {
+      return;
+    }
+
+    // Don't hide if answer is currently streaming/generating
+    if (this.isStreaming) {
+      return;
+    }
+
+    // Don't hide if user is currently typing in any input field
+    const activeElement = document.activeElement;
+    const isTypingInQuestions = activeElement && activeElement.id === 'yt-ai-user-query-input';
+    const isTypingInChatbox = activeElement && activeElement.id === 'ytai-followup-input';
+    
+    if (isTypingInQuestions || isTypingInChatbox) {
+      return;
+    }
+
     this.overlay.classList.remove('visible');
     this.isVisible = false;
   }
