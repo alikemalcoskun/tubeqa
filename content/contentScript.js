@@ -65,14 +65,19 @@ class YouTubeAIAssistant {
       }
 
       // Initialize UI overlay
-      const uiInitialized = await this.uiOverlay.initialize((question, index) => {
-        this.handleQuestionClick(question, index);
+      const uiInitialized = await this.uiOverlay.initialize((question, index, startTime, endTime) => {
+        this.handleQuestionClick(question, index, startTime, endTime);
       });
 
       if (!uiInitialized) {
         console.error('Failed to initialize UI overlay');
         return false;
       }
+
+      // Set follow-up question handler
+      this.uiOverlay.setFollowUpQuestionHandler((question, startTime, endTime) => {
+        this.handleFollowUpQuestion(question, startTime, endTime);
+      });
 
       this.isInitialized = true;
       console.log('YouTube AI Assistant initialized successfully');
@@ -318,9 +323,6 @@ class YouTubeAIAssistant {
     }
 
     try {
-      // Show chatbox with loading state
-      this.uiOverlay.showChatbox(question);
-
       // Get video summary for the question's time range
       let videoSummary = '';
       if (this.summarizerClient && this.summarizerClient.initialized) {
@@ -370,13 +372,80 @@ class YouTubeAIAssistant {
       );
 
       // Mark streaming as complete
-      this.uiOverlay.finishStreaming();
+      this.uiOverlay.finishStreaming(fullAnswer);
       console.log('Answer generation complete');
 
     } catch (error) {
       console.error('Failed to generate answer:', error);
       this.uiOverlay.updateChatboxContent('Sorry, I encountered an error generating the answer.');
-      this.uiOverlay.finishStreaming();
+      this.uiOverlay.finishStreaming('Sorry, I encountered an error generating the answer.');
+    }
+  }
+
+  /**
+   * Handle follow-up questions with conversation history
+   * @param {string} question - The follow-up question
+   * @param {number} startTime - Start time for context
+   * @param {number} endTime - End time for context
+   */
+  async handleFollowUpQuestion(question, startTime, endTime) {
+    console.log(`Follow-up question: "${question}", Time range: ${startTime}-${endTime}`);
+
+    if (!this.isInitialized || !this.promptClient || !this.uiOverlay) {
+      console.warn('Cannot handle follow-up question - not initialized');
+      return;
+    }
+
+    try {
+      // Get conversation history
+      const conversationHistory = this.uiOverlay.getConversationHistory();
+
+      // Get video summary for context
+      let videoSummary = '';
+      if (this.summarizerClient && this.summarizerClient.initialized) {
+        const summaryStartTime = startTime - this.summaryBuffer;
+        const summaryEndTime = endTime + this.summaryBuffer;
+        const text = await this.subtitleParser.getTranscriptChunk(
+          summaryStartTime,
+          summaryEndTime,
+        );
+        const translatedText = await this.translateIfNeeded(text);
+        videoSummary = await this.summarizerClient.getSummaryForTime(translatedText, summaryStartTime, summaryEndTime);
+        console.log('Got video summary for follow-up:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
+      }
+
+      // Capture current video frame
+      let videoFrame = null;
+      if (this.videoElement && this.frameClient) {
+        console.log('Capturing video frame for follow-up answer...');
+        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        if (videoFrame) {
+          console.log(`Video frame captured for follow-up (${videoFrame.size} bytes)`);
+        }
+      }
+
+      // Generate answer with conversation history
+      console.log('Starting follow-up answer generation with streaming...');
+      let fullAnswer = '';
+      await this.promptClient.generateAnswerWithHistory(
+        question,
+        conversationHistory,
+        videoSummary,
+        videoFrame,
+        (chunk) => {
+          fullAnswer += chunk;
+          this.uiOverlay.updateChatboxContent(fullAnswer);
+        }
+      );
+
+      // Mark streaming as complete
+      this.uiOverlay.finishStreaming(fullAnswer);
+      console.log('Follow-up answer generation complete');
+
+    } catch (error) {
+      console.error('Failed to generate follow-up answer:', error);
+      this.uiOverlay.updateChatboxContent('Sorry, I encountered an error generating the answer.');
+      this.uiOverlay.finishStreaming('Sorry, I encountered an error generating the answer.');
     }
   }
 

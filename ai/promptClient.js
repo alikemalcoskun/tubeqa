@@ -199,6 +199,70 @@ Answer:`;
   }
 
   /**
+   * Generate answer with conversation history (for follow-up questions)
+   * @param {string} question - The follow-up question
+   * @param {Array} conversationHistory - Array of {role, content} objects
+   * @param {string} videoSummary - Summary of the video content
+   * @param {Blob} videoFrame - Current video frame as image blob
+   * @param {Function} onChunk - Callback for streaming chunks
+   * @returns {Promise<string>} Generated answer
+   */
+  async generateAnswerWithHistory(question, conversationHistory, videoSummary, videoFrame, onChunk) {
+    if (!this.initialized || !this.session) {
+      console.error('Prompt API not initialized');
+      return '';
+    }
+
+    try {
+      // Build conversation context
+      let conversationContext = 'Previous conversation:\n';
+      for (const message of conversationHistory) {
+        conversationContext += `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content}\n\n`;
+      }
+
+      // Build the prompt with conversation history
+      const prompt = `You are a helpful AI assistant answering questions about a YouTube video.
+
+${conversationContext}
+
+Video Context: ${videoSummary}
+
+Based on the video context and our previous conversation, please answer the following question:
+
+${question}
+
+Provide a clear, helpful, and conversational answer that takes into account our previous discussion.`;
+
+      console.log('Generating follow-up answer with conversation history...');
+      
+      let fullAnswer = '';
+      
+      // Use prompt with streaming (with image if available)
+      let stream;
+      if (videoFrame) {
+        stream = await this.session.promptStreaming(prompt, {
+          image: videoFrame
+        });
+      } else {
+        stream = await this.session.promptStreaming(prompt);
+      }
+      
+      for await (const chunk of stream) {
+        fullAnswer = chunk;
+        if (onChunk) {
+          onChunk(chunk);
+        }
+      }
+
+      console.log('Follow-up answer generation complete');
+      return fullAnswer;
+    } catch (error) {
+      console.error('Failed to generate follow-up answer:', error);
+      return 'Sorry, I encountered an error generating the answer.';
+    }
+  }
+
+  /**
    * Parse the AI response into an array of questions
    * @param {string} response - Raw AI response
    * @returns {string[]} Array of questions

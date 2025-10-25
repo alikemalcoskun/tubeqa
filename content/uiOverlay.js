@@ -19,6 +19,14 @@ class UIOverlay {
     this.chatboxContent = null; // Content area of chatbox
     this.isChatboxVisible = false; // Track chatbox visibility
     this.isStreaming = false; // Track if answer is streaming
+    
+    // Question history with timestamps
+    this.questionHistory = []; // Array of {questions: [{text, startTime, endTime}], timestamp}
+    this.currentQuestionGroupIndex = -1; // Current group being displayed (-1 means latest)
+    
+    // Conversation history for chatbox
+    this.conversationHistory = []; // Array of {role: 'user'|'assistant', content: string}
+    this.conversationContext = null; // Store context (startTime, endTime) for the conversation
   }
 
   /**
@@ -490,12 +498,12 @@ class UIOverlay {
   handleQuestionClick(question, index, startTime, endTime) {
     console.log('Question clicked:', question, 'Time range:', startTime, '-', endTime);
 
+    // Show chatbox with conversation interface
+    this.showChatbox(question, startTime, endTime);
+
     // Pass timing information to the click handler
     if (this.onQuestionClick) {
       this.onQuestionClick(question, index, startTime, endTime);
-    } else {
-      // For now, just show an alert
-      alert(`Question clicked: "${question}"\n\nTime range: ${startTime.toFixed(1)}s - ${endTime.toFixed(1)}s\n\nAnswer generation will be available in Phase 2.`);
     }
   }
 
@@ -729,11 +737,13 @@ class UIOverlay {
   }
 
   /**
-   * Show answer block below questions with a question
-   * @param {string} question - The question being answered
+   * Show chatbox with conversation interface
+   * @param {string} question - The initial question
+   * @param {number} startTime - Start time for context
+   * @param {number} endTime - End time for context
    */
-  showChatbox(question) {
-    // Hide questions when showing answer
+  showChatbox(question, startTime, endTime) {
+    // Hide questions when showing chatbox
     if (this.questionsContainer) {
       const questionsList = this.questionsContainer.querySelector('.yt-ai-questions-list');
       if (questionsList) {
@@ -741,18 +751,21 @@ class UIOverlay {
       }
     }
 
-    // Remove existing answer container if any
+    // Remove existing chatbox if any
     this.destroyChatbox();
 
-    // Create answer wrapper (overall container)
+    // Initialize conversation with the first question
+    this.conversationHistory = [{role: 'user', content: question}];
+    this.conversationContext = {startTime, endTime};
+
+    // Create chatbox wrapper (overall container)
     this.chatbox = document.createElement('div');
     this.chatbox.className = 'ytai-answer-wrapper';
 
     // Create close button fixed at the top
     const closeButton = document.createElement('button');
     closeButton.className = 'ytai-answer-close';
-    // TODO: Add custom icon for the close button
-    closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>'; // Back arrow
+    closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>';
     closeButton.title = 'Back';
     closeButton.addEventListener('click', () => this.closeChatbox());
 
@@ -760,7 +773,7 @@ class UIOverlay {
     const scrollableContent = document.createElement('div');
     scrollableContent.className = 'ytai-answer-container';
 
-    // Create question block without close button
+    // Create question block
     const questionBlock = document.createElement('div');
     questionBlock.className = 'ytai-answer-question';
     questionBlock.textContent = question;
@@ -778,10 +791,6 @@ class UIOverlay {
     scrollableContent.appendChild(questionBlock);
     scrollableContent.appendChild(this.chatboxContent);
     
-    // Assemble answer wrapper - close button fixed, then scrollable content
-    this.chatbox.appendChild(closeButton);
-    this.chatbox.appendChild(scrollableContent);
-    
     // Store reference to scrollable content for later use
     this.scrollableContent = scrollableContent;
     
@@ -791,23 +800,89 @@ class UIOverlay {
       const hasScroll = elem.scrollHeight > elem.clientHeight;
       
       if (hasScroll) {
-        // Check if scrolling would go out of bounds
         const isAtTop = elem.scrollTop === 0;
         const isAtBottom = elem.scrollTop + elem.clientHeight >= elem.scrollHeight - 1;
         const scrollingUp = e.deltaY < 0;
         const scrollingDown = e.deltaY > 0;
         
-        // Only prevent default if we're scrolling within bounds
         if ((scrollingDown && !isAtBottom) || (scrollingUp && !isAtTop)) {
           e.stopPropagation();
           e.preventDefault();
           elem.scrollTop += e.deltaY;
         }
       } else {
-        // Even if there's no scroll, prevent YouTube from scrolling when hovering
         e.stopPropagation();
       }
     }, { passive: false });
+
+    // Create input container fixed at the bottom
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'yt-ai-user-query-container';
+
+    const userInput = document.createElement('input');
+    userInput.type = 'text';
+    userInput.className = 'yt-ai-user-query-input';
+    userInput.placeholder = 'Ask a follow-up question...';
+    userInput.id = 'ytai-followup-input';
+
+    const sendButton = document.createElement('button');
+    sendButton.className = 'yt-ai-user-query-submit';
+    sendButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg>';
+    sendButton.title = 'Send message';
+
+    // Handle sending follow-up questions
+    const handleSendMessage = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const message = userInput.value.trim();
+      if (!message || this.isStreaming) return;
+
+      userInput.value = '';
+      
+      // Update question block with new question
+      questionBlock.textContent = message;
+      
+      // Reset answer block with loading
+      this.chatboxContent.innerHTML = '';
+      const loadingDots = document.createElement('div');
+      loadingDots.className = 'ytai-answer-loading';
+      loadingDots.innerHTML = '<span></span><span></span><span></span>';
+      this.chatboxContent.appendChild(loadingDots);
+      
+      // Add to conversation history
+      this.conversationHistory.push({role: 'user', content: message});
+      
+      // Trigger follow-up answer generation
+      if (this.onFollowUpQuestion) {
+        this.onFollowUpQuestion(message, this.conversationContext.startTime, this.conversationContext.endTime);
+      }
+    };
+
+    sendButton.addEventListener('click', handleSendMessage);
+    
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSendMessage(e);
+      }
+    });
+
+    // Prevent YouTube keyboard shortcuts while typing
+    userInput.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+    });
+
+    userInput.addEventListener('keyup', (e) => {
+      e.stopPropagation();
+    });
+
+    inputContainer.appendChild(userInput);
+    inputContainer.appendChild(sendButton);
+
+    // Assemble chatbox
+    this.chatbox.appendChild(closeButton);
+    this.chatbox.appendChild(scrollableContent);
+    this.chatbox.appendChild(inputContainer);
 
     // Add to questions container
     if (this.questionsContainer) {
@@ -843,26 +918,32 @@ class UIOverlay {
     // So we just set the text directly
     this.chatboxContent.textContent = text;
 
-    // Auto-scroll container to bottom if needed
-    if (this.chatbox.scrollHeight > this.chatbox.clientHeight) {
-      this.chatbox.scrollTop = this.chatbox.scrollHeight;
+    // Auto-scroll scrollable content to bottom if needed
+    if (this.scrollableContent && this.scrollableContent.scrollHeight > this.scrollableContent.clientHeight) {
+      this.scrollableContent.scrollTop = this.scrollableContent.scrollHeight;
     }
   }
 
   /**
-   * Mark streaming as complete
+   * Mark streaming as complete and save to conversation history
+   * @param {string} fullAnswer - The complete answer text
    */
-  finishStreaming() {
+  finishStreaming(fullAnswer) {
     this.isStreaming = false;
+    
+    // Save the assistant's response to conversation history
+    if (fullAnswer) {
+      this.conversationHistory.push({role: 'assistant', content: fullAnswer});
+    }
   }
 
   /**
-   * Close answer and show questions again
+   * Close chatbox and show questions again
    */
   closeChatbox() {
     if (!this.chatbox) return;
 
-    // Remove answer container
+    // Remove chatbox
     if (this.chatbox.parentNode) {
       this.chatbox.parentNode.removeChild(this.chatbox);
     }
@@ -875,10 +956,14 @@ class UIOverlay {
       }
     }
 
+    // Clear conversation state
     this.chatbox = null;
     this.chatboxContent = null;
     this.isChatboxVisible = false;
-    console.log('Answer closed - showing questions');
+    this.conversationHistory = [];
+    this.conversationContext = null;
+    
+    console.log('Chatbox closed - showing questions');
   }
 
   /**
@@ -892,6 +977,24 @@ class UIOverlay {
     this.chatboxContent = null;
     this.isChatboxVisible = false;
     this.isStreaming = false;
+    this.conversationHistory = [];
+    this.conversationContext = null;
+  }
+
+  /**
+   * Set handler for follow-up questions
+   * @param {Function} handler - Handler function for follow-up questions
+   */
+  setFollowUpQuestionHandler(handler) {
+    this.onFollowUpQuestion = handler;
+  }
+
+  /**
+   * Get conversation history
+   * @returns {Array} Conversation history
+   */
+  getConversationHistory() {
+    return this.conversationHistory;
   }
 }
 
