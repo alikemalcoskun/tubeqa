@@ -521,6 +521,11 @@ class UIOverlay {
     this.overlay.classList.add('visible');
     this.isVisible = true;
 
+    // Update toggle button to show filled state
+    if (this.toggleButton) {
+      this.toggleButton.classList.add('overlay-open');
+    }
+
     // Clear any pending hide timeout
     if (this.hideTimeout) {
       clearTimeout(this.hideTimeout);
@@ -555,6 +560,11 @@ class UIOverlay {
 
     this.overlay.classList.remove('visible');
     this.isVisible = false;
+
+    // Update toggle button to remove filled state
+    if (this.toggleButton) {
+      this.toggleButton.classList.remove('overlay-open');
+    }
   }
 
   /**

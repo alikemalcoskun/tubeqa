@@ -311,6 +311,13 @@
   flex-shrink: 0;
   display: block;
   margin: auto;
+  transition: fill 0.2s ease, stroke-width 0.2s ease;
+}
+
+/* Fill the icon when overlay is open */
+.ytp-ai-toggle.overlay-open svg {
+  fill: #ffffff;
+  stroke-width: 1.5;
 }
 
 /* ==================== Answer Block Styles ==================== */
