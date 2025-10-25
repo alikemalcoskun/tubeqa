@@ -376,6 +376,10 @@
   box-sizing: border-box;
 }
 
+.ytai-answer-question:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
 /* Close button for answer - fixed at top */
 .ytai-answer-close {
   display: flex;
@@ -431,7 +435,7 @@
 }
 
 .ytai-answer-block:hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.8);
 }
 
 /* Loading dots animation - matches question block style */
