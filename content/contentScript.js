@@ -8,7 +8,7 @@ class YouTubeAIAssistant {
     this.promptClient = null;
     this.summarizerClient = null;
     this.translatorClient = null;
-    this.frameClient = null;
+    this.videoFrameExtractor = null;
     this.subtitleParser = null;
     this.uiOverlay = null;
     this.updateInterval = null;
@@ -32,7 +32,7 @@ class YouTubeAIAssistant {
       this.promptClient = new PromptClient();
       this.summarizerClient = new SummarizerClient();
       this.translatorClient = new TranslatorClient();
-      this.frameClient = new FrameClient();
+      this.videoFrameExtractor = new VideoFrameExtractor();
       this.subtitleParser = new SubtitleParser();
       this.uiOverlay = new UIOverlay();
 
@@ -276,9 +276,9 @@ class YouTubeAIAssistant {
 
       // Capture current video frame for multimodal question generation
       let videoFrame = null;
-      if (this.videoElement && this.frameClient) {
+      if (this.videoElement && this.videoFrameExtractor) {
         console.log('Capturing video frame for multimodal question generation...');
-        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        videoFrame = await this.videoFrameExtractor.captureVideoFrame(this.videoElement);
         if (videoFrame) {
           console.log(`Video frame captured successfully (${videoFrame.size} bytes)`);
         } else {
@@ -347,9 +347,9 @@ class YouTubeAIAssistant {
 
       // Capture current video frame for multimodal answer generation
       let videoFrame = null;
-      if (this.videoElement && this.frameClient) {
+      if (this.videoElement && this.videoFrameExtractor) {
         console.log('Capturing video frame for answer generation...');
-        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        videoFrame = await this.videoFrameExtractor.captureVideoFrame(this.videoElement);
         if (videoFrame) {
           console.log(`Video frame captured for answer (${videoFrame.size} bytes)`);
         } else {
@@ -416,9 +416,9 @@ class YouTubeAIAssistant {
 
       // Capture current video frame
       let videoFrame = null;
-      if (this.videoElement && this.frameClient) {
+      if (this.videoElement && this.videoFrameExtractor) {
         console.log('Capturing video frame for follow-up answer...');
-        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        videoFrame = await this.videoFrameExtractor.captureVideoFrame(this.videoElement);
         if (videoFrame) {
           console.log(`Video frame captured for follow-up (${videoFrame.size} bytes)`);
         }

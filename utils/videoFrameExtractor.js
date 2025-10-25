@@ -1,9 +1,9 @@
 /**
- * Frame Client for YouTube AI Assistant
+ * Video Frame Extractor for YouTube AI Assistant
  * Handles video frame capture operations for multimodal AI processing
  */
 
-class FrameClient {
+class VideoFrameExtractor {
   constructor() {
     this.canvas = null;
     this.ctx = null;
@@ -48,5 +48,5 @@ class FrameClient {
 }
 
 // Export for use in other modules
-window.FrameClient = FrameClient;
+window.VideoFrameExtractor = VideoFrameExtractor;
 
