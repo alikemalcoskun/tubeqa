@@ -429,7 +429,7 @@
 
 /* Answer block - matches question block style */
 .ytai-answer-block {
-  display: flex;
+  display: block;
   border-radius: 28px;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.3);
@@ -449,6 +449,30 @@
 
 .ytai-answer-block:hover {
   background: rgba(0, 0, 0, 0.8);
+}
+
+/* Bold text styling in answers */
+.ytai-answer-block strong {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Italic text styling in answers */
+.ytai-answer-block em {
+  font-style: italic;
+  color: #ffffff;
+}
+
+/* List styling in answers */
+.ytai-answer-block ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.ytai-answer-block li {
+  margin: 4px 0;
+  color: #ffffff;
 }
 
 /* Loading dots animation - matches question block style */

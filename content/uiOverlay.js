@@ -943,9 +943,10 @@ class UIOverlay {
       loadingDots.remove();
     }
 
+    // Parse markdown and set as HTML
     // Chrome Prompt API returns full accumulated text in each chunk, not deltas
-    // So we just set the text directly
-    this.chatboxContent.textContent = text;
+    const parsedHtml = window.MarkdownParser ? window.MarkdownParser.parse(text) : text;
+    this.chatboxContent.innerHTML = parsedHtml;
 
     // Auto-scroll scrollable content to bottom if needed
     if (this.scrollableContent && this.scrollableContent.scrollHeight > this.scrollableContent.clientHeight) {
