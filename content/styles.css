@@ -480,3 +480,95 @@
     max-height: 250px;
   }
 }
+
+/* ==================== User Query Input Styles ==================== */
+
+/* User query container */
+.yt-ai-user-query-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  align-items: center;
+}
+
+/* User query input field */
+.yt-ai-user-query-input {
+  flex: 1;
+  border-radius: 28px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0 2px #000;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  line-height: 1.4;
+  min-height: 32px;
+  outline: none;
+  transition: background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.yt-ai-user-query-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.yt-ai-user-query-input:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.yt-ai-user-query-input:focus {
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+/* User query submit button */
+.yt-ai-user-query-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0 2px #000;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.yt-ai-user-query-submit:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.yt-ai-user-query-submit:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yt-ai-user-query-submit svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Responsive adjustments for user query */
+@media (max-width: 768px) {
+  .yt-ai-user-query-input {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .yt-ai-user-query-submit {
+    width: 32px;
+    height: 32px;
+  }
+
+  .yt-ai-user-query-submit svg {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -380,6 +380,84 @@ class UIOverlay {
 
       questionsList.appendChild(questionElement);
     });
+
+    // Add user query input field at the end
+    this.addUserQueryField(questionsList);
+  }
+
+  /**
+   * Add user query input field to the questions list
+   * @param {HTMLElement} questionsList - The questions list container
+   */
+  addUserQueryField(questionsList) {
+    // Create user query container
+    const userQueryContainer = document.createElement('div');
+    userQueryContainer.className = 'yt-ai-user-query-container';
+
+    // Create input field
+    const userQueryInput = document.createElement('input');
+    userQueryInput.type = 'text';
+    userQueryInput.className = 'yt-ai-user-query-input';
+    userQueryInput.placeholder = 'Ask your own question...';
+    userQueryInput.id = 'yt-ai-user-query-input';
+
+    // Create submit button
+    const submitButton = document.createElement('button');
+    submitButton.className = 'yt-ai-user-query-submit';
+    // TODO: Add custom icon for the submit button
+    submitButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg>';
+    submitButton.title = 'Submit question';
+
+    // Handle submit
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const question = userQueryInput.value.trim();
+      if (!question) return;
+
+      // Get current video time for context
+      const video = document.querySelector('video');
+      const currentTime = video ? video.currentTime : 0;
+      
+      // Use a time range around current time (similar to generated questions)
+      const startTime = Math.max(0, currentTime - 15); // 15 seconds before
+      const endTime = currentTime + 15; // 15 seconds after
+      
+      // Clear input
+      userQueryInput.value = '';
+      
+      // Handle the user's question with same logic as clicking a question
+      this.handleQuestionClick(question, -1, startTime, endTime);
+    };
+
+    // Add click handler to submit button
+    submitButton.addEventListener('click', handleSubmit);
+
+    // Add Enter key handler to input field
+    userQueryInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSubmit(e);
+      }
+    });
+
+    // Prevent YouTube keyboard shortcuts from triggering while typing
+    userQueryInput.addEventListener('keydown', (e) => {
+      // Stop propagation to prevent YouTube shortcuts from firing
+      e.stopPropagation();
+    });
+
+    userQueryInput.addEventListener('keyup', (e) => {
+      // Stop propagation to prevent YouTube shortcuts from firing
+      e.stopPropagation();
+    });
+
+    // Assemble the container
+    userQueryContainer.appendChild(userQueryInput);
+    userQueryContainer.appendChild(submitButton);
+    
+    // Add to questions list
+    questionsList.appendChild(userQueryContainer);
   }
 
   /**
