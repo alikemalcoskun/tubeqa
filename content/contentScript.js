@@ -8,6 +8,7 @@ class YouTubeAIAssistant {
     this.promptClient = null;
     this.summarizerClient = null;
     this.translatorClient = null;
+    this.frameClient = null;
     this.subtitleParser = null;
     this.uiOverlay = null;
     this.updateInterval = null;
@@ -31,6 +32,7 @@ class YouTubeAIAssistant {
       this.promptClient = new PromptClient();
       this.summarizerClient = new SummarizerClient();
       this.translatorClient = new TranslatorClient();
+      this.frameClient = new FrameClient();
       this.subtitleParser = new SubtitleParser();
       this.uiOverlay = new UIOverlay();
 
@@ -59,7 +61,7 @@ class YouTubeAIAssistant {
       if (!subtitlesInitialized) {
         console.warn('No captions available for this video');
         this.uiOverlay.showError('No captions available for this video');
-        return false;
+        // return false; // Now, use video frame in case of no captions
       }
 
       // Initialize UI overlay
@@ -244,7 +246,7 @@ class YouTubeAIAssistant {
         console.warn('No transcript available');
         // Hide for now
         // this.uiOverlay.showError('No transcript available');
-        return;
+        // return; // Now, use video frame in case of no captions
       }
 
       console.log('Got transcript chunk:', transcript.substring(0, 100) + '...');
@@ -267,8 +269,20 @@ class YouTubeAIAssistant {
         console.log('Got video summary:', videoSummary.substring(0, 100) + (videoSummary.length > 100 ? '...' : ''));
       }
 
-      // Generate questions using AI (with video summary context)
-      const questions = await this.promptClient.generateQuestions(translatedTranscript, videoSummary);
+      // Capture current video frame for multimodal question generation
+      let videoFrame = null;
+      if (this.videoElement && this.frameClient) {
+        console.log('Capturing video frame for multimodal question generation...');
+        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        if (videoFrame) {
+          console.log(`Video frame captured successfully (${videoFrame.size} bytes)`);
+        } else {
+          console.warn('Failed to capture video frame');
+        }
+      }
+
+      // Generate questions using AI (with video summary context and video frame)
+      const questions = await this.promptClient.generateQuestions(translatedTranscript, videoSummary, videoFrame);
 
       console.log('Generated questions:', questions);
 
@@ -329,12 +343,25 @@ class YouTubeAIAssistant {
       const translatedContext = await this.translateIfNeeded(transcriptContext);
       console.log('Got transcript context (translated if needed):', translatedContext.substring(0, 100) + (translatedContext.length > 100 ? '...' : ''));
 
+      // Capture current video frame for multimodal answer generation
+      let videoFrame = null;
+      if (this.videoElement && this.frameClient) {
+        console.log('Capturing video frame for answer generation...');
+        videoFrame = await this.frameClient.captureVideoFrame(this.videoElement);
+        if (videoFrame) {
+          console.log(`Video frame captured for answer (${videoFrame.size} bytes)`);
+        } else {
+          console.warn('Failed to capture video frame for answer');
+        }
+      }
+
       // Generate answer with streaming
       console.log('Starting answer generation with streaming...');
       let fullAnswer = '';
       await this.promptClient.generateAnswer(
         question,
         videoSummary,
+        videoFrame,
         (chunk) => {
           // Update UI with each streamed chunk
           fullAnswer += chunk;

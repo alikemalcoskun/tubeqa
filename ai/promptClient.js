@@ -23,12 +23,27 @@ class PromptClient {
         return false;
       }
 
-      // Create assistant session
+      // Create assistant session with multimodal capabilities
       this.session = await LanguageModel.create({
         systemPrompt: `You are a helpful assistant that generates engaging questions about YouTube video content.
         Generate 2-3 thoughtful questions that viewers might ask about the current video segment.
         Questions should be specific, engaging, and help viewers explore the content deeper.
-        Format your response as a JSON array of strings.`
+        Format your response as a JSON array of strings.`,
+        expectedInputs: [
+          { 
+            type: "text", 
+            languages: ["en"] 
+          },
+          { 
+            type: "image" 
+          }
+        ],
+        expectedOutputs: [
+          { 
+            type: "text", 
+            languages: ["en"] 
+          }
+        ]
       });
 
       this.initialized = true;
@@ -40,22 +55,25 @@ class PromptClient {
   }
 
   /**
-   * Generate questions based on transcript text
+   * Generate questions based on transcript text and video frame
    * @param {string} transcriptText - The transcript text to analyze
    * @param {string} videoSummary - The summary of the video
+   * @param {Blob|File|null} videoFrame - Current video frame image (optional)
    * @returns {Promise<string[]>} Array of generated questions
    */
-  async generateQuestions(transcriptText, videoSummary = "") {
+  async generateQuestions(transcriptText, videoSummary = "", videoFrame = null) {
     if (!this.initialized || !this.session) {
       console.warn('AI session not initialized');
       return [];
     }
 
     try {
+      // Prepare the prompt with multimodal content
       const context = `Video summary: "${videoSummary}"`;
-      const prompt = `${context}
+      const textPrompt = `${context}
 Based on this video transcript segment: "${transcriptText}"
 
+${videoFrame ? 'Analyze the provided video frame image along with the transcript.' : ''}
 Generate 3 questions that viewers might ask about this content. Return only a JSON array of question strings.`;
 
       // Question JSON schema
@@ -68,8 +86,30 @@ Generate 3 questions that viewers might ask about this content. Return only a JS
           }
         }
       };
-      console.log("Question generation starting")
-      const response = await this.session.prompt(prompt, { responseConstraint: questionJsonSchema });
+
+      console.log("Question generation starting");
+      
+      // If we have a video frame, append it to the session first
+      if (videoFrame) {
+        console.log("Appending video frame to session");
+        await this.session.append([
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                value: 'Here is the current video frame for context:'
+              },
+              {
+                type: 'image',
+                value: videoFrame
+              }
+            ]
+          }
+        ]);
+      }
+
+      const response = await this.session.prompt(textPrompt, { responseConstraint: questionJsonSchema });
       console.log("Question generation response:", response);
       const questions = this.parseQuestions(response);
       console.log("Question generation parsed questions:", questions);
@@ -85,29 +125,53 @@ Generate 3 questions that viewers might ask about this content. Return only a JS
    * Generate answer for a specific question with streaming support
    * @param {string} question - The question to answer
    * @param {string} videoSummary - Summary of the video for context
+   * @param {Blob|File|null} videoFrame - Current video frame image (optional)
    * @param {Function} onChunk - Callback for each streamed chunk
    * @returns {Promise<string>} Complete answer
    */
-  async generateAnswer(question, videoSummary, onChunk) {
+  async generateAnswer(question, videoSummary, videoFrame, onChunk) {
     if (!this.initialized || !this.session) {
       console.warn('AI session not initialized');
       return '';
     }
 
     try {
+      // If we have a video frame, append it to the session first
+      if (videoFrame) {
+        console.log("Appending video frame to answer session");
+        await this.session.append([
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                value: 'Here is the current video frame for visual context:'
+              },
+              {
+                type: 'image',
+                value: videoFrame
+              }
+            ]
+          }
+        ]);
+      }
+
       // Create a smart prompt that uses summary for video-specific questions
       // and general knowledge for general questions
       const prompt = `You are answering a question about a YouTube video.
 
 ${videoSummary ? `Video Context: ${videoSummary}` : 'No video context available.'}
+${videoFrame ? 'Visual Context: Video frame provided above.' : ''}
 
 Question: "${question}"
 
 Instructions:
 - If the question is specific to the video content and you have the video context, answer based on that context.
+- If you have visual context from the video frame, incorporate what you see in the image.
 - If the question is more general or you don't have enough video context, use your general knowledge.
 - Be concise but thorough.
 - If you're using video context, start with phrases like "Based on the video..." or "According to the content..."
+- If you're using visual context, mention what you observe in the frame.
 - If you're using general knowledge, start with phrases like "In general..." or "Generally speaking..."
 
 Answer:`;

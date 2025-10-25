@@ -15,6 +15,7 @@
     {
       "matches": ["*://www.youtube.com/watch*"],
       "js": [
+        "ai/frameClient.js",
         "ai/promptClient.js",
         "ai/summarizerClient.js",
         "ai/translatorClient.js",
