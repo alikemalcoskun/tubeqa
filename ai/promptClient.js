@@ -30,20 +30,25 @@ class PromptClient {
         Questions should be specific, engaging, and help viewers explore the content deeper.
         Format your response as a JSON array of strings.`,
         expectedInputs: [
-          { 
-            type: "text", 
-            languages: ["en"] 
+          {
+            type: "text",
+            languages: ["en"]
           },
-          { 
-            type: "image" 
+          {
+            type: "image"
           }
         ],
         expectedOutputs: [
-          { 
-            type: "text", 
-            languages: ["en"] 
+          {
+            type: "text",
+            languages: ["en"]
           }
-        ]
+        ],
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            console.log(`Language Model download progress: ${e.loaded * 100}%`);
+          });
+        }
       });
 
       this.initialized = true;
