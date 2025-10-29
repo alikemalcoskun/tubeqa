@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube AI Q&A Assistant - Chrome Built-in AI",
+  "name": "tubeqa - AI video Q&A right inside your YouTube experience.",
   "version": "1.0.0",
-  "description": "Chrome Built-in AI-powered assistant that generates questions from YouTube video captions",
+  "description": "An on-device AI Q&A assistant for YouTube videos that generates questions and answers from video content using Chrome Built-in AI APIs",
 
   "permissions": [
     "storage"
