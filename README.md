@@ -5,7 +5,7 @@
 Built for [Google Chrome Built-in AI Challenge 2025](https://googlechromeai2025.devpost.com/)
 
 ## Testing Instructions
-1. Enable chrome://flags/#prompt-api-for-gemini-nano-multimodal-input
+1. Enable chrome://flags/#optimization-guide-on-device-model and chrome://flags/#prompt-api-for-gemini-nano-multimodal-input
 2. Go to chrome://extensions/
 3. Enable Developer Mode
 4. Click on the "Load unpacked" button
