@@ -11,7 +11,7 @@ Built for [Google Chrome Built-in AI Challenge 2025](https://googlechromeai2025.
 4. Click on the "Load unpacked" button
 5. Select the "tubeqa" folder
 6. The extension should now be loaded
-7. (Optional) If you receive an error related to Origin Trial, you can add the Origin Trial key to the manifest.json file.
+7. (Optional) If you receive an error related to Origin Trial, you can add the Origin Trial token to the manifest.json file.
 8. Go to any YouTube video
 9. The extension should now be loaded and you should see the AI button in the player controls
 10. It will automatically download the models in your first interaction. The process may take a few minutes. (In some cases, the model download process may not start due to a requirement related to user interaction. In this case, you can refresh the page.)
@@ -20,7 +20,7 @@ Built for [Google Chrome Built-in AI Challenge 2025](https://googlechromeai2025.
 13. Click on any suggested question, or type your own, and get instant, streaming answers that reflect the video’s context and visuals in real time.
 
 ## Chrome Version
-The extension is tested on Chrome 142.0.7444.60 and Chrome Dev 143.0.7489.0. In [official documentation](https://developer.chrome.com/docs/ai/get-started), it is recommended to use the Chrome version 138 or higher for Built-in AI features.
+The extension is tested on Chrome 142.0.7444.60 and Chrome Dev 143.0.7489.0. In [official documentation](https://developer.chrome.com/docs/ai/get-started), it is recommended to use the Chrome version 138 or higher for built-in AI features.
 
 ## Inspiration
 One of the trends for the LLM world in 2025 is to enhance the experience. Generative UI concepts and integrations into applications such as browsers are redefining the AI interactions on user interfaces and freeing the generative power of LLMs from the limitations of cold walls of chatbot interfaces.
