@@ -34,5 +34,7 @@
       "resources": ["content/styles.css"],
       "matches": ["*://www.youtube.com/*"]
     }
+  ],
+  "origin_trial_tokens": [
   ]
 }
